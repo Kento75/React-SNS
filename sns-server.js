@@ -145,4 +145,42 @@ app.get('/api/add_timeline', (req, res) => {
   })
 })
 
-// TODO: ユーザー一覧取得等のAPI追加
+// ユーザー一覧取得API
+app.get('/api/get_allusers', (req, res) => {
+  db.userDB.find({}, (err, docs) => {
+    if(err) return res.json({ status: false })
+    
+    const users = docs.map(e => e.userid)
+    res.json({ status: true, users })
+  })
+})
+
+// ユーザー情報取得API
+app.get('/api/get_user', (req, res) => {
+  const userid = req.query.userid
+  db.getUser(userid, (user) => {
+    if(!user) return res.json({ status: false })
+
+    res.json({ status: true, friends: user.friends })
+  })
+})
+
+// 友達のタイムライン取得API
+app.get('/api/get_frinends_timeline', (req, res) => {
+  const userid = req.query.userid
+  const token = req.query.token
+  db.getFriendsTimeline(userid, token, (err, docs) => {
+    if(err) {
+      res.json({ status: false, msg: err.toString() })
+      return
+    }
+    res.json({ status: true, timelines: docs })
+  })
+})
+
+// 静的ファイルのルーティング
+app.use('/public', express.static('./public'))
+app.use('/login', express.static('./public'))
+app.use('/users', express.static('./public'))
+app.use('/timeline', express.static('./public'))
+app.use('/', express.static('./public'))
