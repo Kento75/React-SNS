@@ -88,5 +88,36 @@ function udateUser(user, callback) {
 
 // 友達のタイムライン取得
 function getFriendsTimeline(userid, token, callback) {
-  // TODO : 処理の実装
+  checkToken(userid, token, (err, user) => {
+    if(err) return callback(new Error('認証に失敗'), null)
+
+    // 友達一覧を取得
+    const friends = []
+    for (const f in user.friends) friends.push(f)
+    // 友達 ＋ ユーザー自身のタイムライン取得
+    friends.push(userid)
+
+    // 友達のタイムラインを最大20件に設定
+    timelineDB
+      .find({ userid: { $in: friends } })
+      .sort({ time: -1 })
+      .limit(20)
+      .exec((err, docs) => {
+        if(err) {
+          callback(new Error('DBエラー'), null)
+        }
+        callback(null, docs)
+      })
+  })
+}
+
+module.exports = {
+  userDB,
+  timelineDB,
+  getUser,
+  addUser,
+  login,
+  checkToken,
+  updateUser,
+  getFriendsTimeline
 }
