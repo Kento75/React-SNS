@@ -15,7 +15,7 @@ const SNSApp = () => {
       <Switch>
         <Route path='/users' component={ SNSUsers } />
         <Route path='/timeline' component={ SNSTimeline } /> 
-        <Route path='/login' component={ SNSLogin } />       
+        <Route path='/login' component={ SNSLogin } />
         <Route component={ SNSLogin } />
       </Switch>
     </div>
