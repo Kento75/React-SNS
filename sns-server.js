@@ -1,184 +1,123 @@
-///// SNS サーバー /////
-
-// DB接続
+// データベースに接続
 const db = require('./server/database')
 
-// webサーバー起動
+// WEBサーバを起動
 const express = require('express')
 const app = express()
 const portNo = 3001
 
-// サーバー起動
 app.listen(portNo, () => {
-  console.log('Server Started ： ', `http://localhost:${ portNo }`)
+  console.log('Server Started： ', `http://localhost:${portNo}`)
 })
 
-/// API 定義 ///
-
-// ユーザー追加用API
+// APIの定義
+// ユーザ追加用のAPI - ユーザを追加する
 app.get('/api/adduser', (req, res) => {
   const userid = req.query.userid
   const passwd = req.query.passwd
-  
-  if(userid === '' || passwd === '') {
-    return res.json({
-      status: false,
-      msg: 'ユーザーIDまたはパスワードが未入力です。',
-    })
+  if (userid === '' || passwd === '') {
+    return res.json({status: false, msg: 'パラメータが空'})
   }
-
-  // ユーザーチェック
+  // 既存ユーザのチェック
   db.getUser(userid, (user) => {
-    // すでに存在する場合
-    if(user) {
-      return res.json({
-        status: false,
-        msg: 'すでにユーザーが存在します。',
-      })
+    if (user) { // 既にユーザが存在する場合
+      return res.json({status: false, msg: '既にユーザがいます'})
     }
-
-    // ユーザーが存在しない(新規)の場合
+    // 新規追加
     db.addUser(userid, passwd, (token) => {
-      if(!token) {
-        res.json({
-          status: false,
-          msg: 'DBエラー',
-        })
-        res.json({
-          status: true,
-          token,
-        })
+      if (!token) {
+        res.json({status: false, msg: 'DBエラー'})
       }
+      res.json({status: true, token})
     })
   })
 })
-
-// ユーザーログイン用API
-app.get('/api/login', (req,res) => {
+// ユーザログイン用のAPI - ログインするとトークンを返す
+app.get('/api/login', (req, res) => {
   const userid = req.query.userid
   const passwd = req.query.passwd
-
   db.login(userid, passwd, (err, token) => {
-    if(err) {
-      res.json({
-        status: false,
-        msg: '認証エラー',
-      })
+    if (err) {
+      res.json({status: false, msg: '認証エラー'})
+      return
     }
-
-    // ログイン成功時
-    res.json({
-      status: true,
-      token,
-    })
+    // ログイン成功したらトークンを返す
+    res.json({status: true, token})
   })
 })
-
-// 友達追加用API
+// 友達追加API
 app.get('/api/add_friend', (req, res) => {
   const userid = req.query.userid
   const token = req.query.token
   const friendid = req.query.friendid
-
   db.checkToken(userid, token, (err, user) => {
-    // 認証エラー
-    if(err) {
-      res.json({
-        status: false,
-        msg: '認証エラー',
-      })
+    if (err) { // 認証エラー
+      res.json({status: false, msg: '認証エラー'})
       return
     }
-
     // 友達追加
     user.friends[friendid] = true
     db.updateUser(user, (err) => {
-      if(err) {
-        res.json({
-          status: false,
-          msg: 'DBエラー',
-        })
+      if (err) {
+        res.json({status: false, msg: 'DBエラー'})
         return
       }
-      res.json({
-        status: false,
-      })
+      res.json({status: true})
     })
   })
 })
-
-// 発言用API(自分)
+// 自分のタイムラインに発言
 app.get('/api/add_timeline', (req, res) => {
   const userid = req.query.userid
   const token = req.query.token
   const comment = req.query.comment
   const time = (new Date()).getTime()
-
   db.checkToken(userid, token, (err, user) => {
-    if(err) {
-      res.json({
-        status: false,
-        msg: '認証エラー',
-      })
+    if (err) {
+      res.json({status: false, msg: '認証エラー'})
       return
     }
-
     // タイムラインに追加
-    const item = {
-      userid,
-      comment,
-      time,
-    }
+    const item = {userid, comment, time}
     db.timelineDB.insert(item, (err, it) => {
-      if(err) {
-        res.json({
-          status: false,
-          msg: 'DBエラー',
-        })
+      if (err) {
+        res.json({status: false, msg: 'DBエラー'})
         return
       }
-      res.json({
-        status: true,
-        timelineid: it._id,  // DBのインデックス番号
-      })
+      res.json({status: true, timelineid: it._id})
     })
   })
 })
-
-// ユーザー一覧取得API
+// ユーザの一覧を取得
 app.get('/api/get_allusers', (req, res) => {
   db.userDB.find({}, (err, docs) => {
-    if(err) return res.json({ status: false })
-    
+    if (err) return res.json({status: false})
     const users = docs.map(e => e.userid)
-    res.json({ status: true, users })
+    res.json({status: true, users})
   })
 })
-
-// ユーザー情報取得API
+// ユーザ情報を取得
 app.get('/api/get_user', (req, res) => {
   const userid = req.query.userid
   db.getUser(userid, (user) => {
-    if(!user) return res.json({ status: false })
-
-    res.json({ status: true, friends: user.friends })
+    if (!user) return res.json({status: false})
+    res.json({status: true, friends: user.friends})
   })
 })
-
-// 友達のタイムライン取得API
-app.get('/api/get_frinends_timeline', (req, res) => {
+// 友達のタイムラインを取得
+app.get('/api/get_friends_timeline', (req, res) => {
   const userid = req.query.userid
   const token = req.query.token
   db.getFriendsTimeline(userid, token, (err, docs) => {
-    if(err) {
-      res.json({ status: false, msg: err.toString() })
+    if (err) {
+      res.json({status: false, msg: err.toString()})
       return
     }
-    res.json({ status: true, timelines: docs })
+    res.json({status: true, timelines: docs})
   })
 })
 
-// 静的ファイルのルーティング
+// 静的ファイルを自動的に返すようルーティングする
 app.use('/public', express.static('./public'))
 app.use('/login', express.static('./public'))
 app.use('/users', express.static('./public'))

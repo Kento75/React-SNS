@@ -4,16 +4,18 @@
   "description": "react sns",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node sns-server.js",
+    "build": "webpack --progress",
+    "build-watch": "webpack --progress watch"
   },
   "keywords": [],
   "author": "Kento75",
   "license": "MIT",
   "dependencies": {
-    "babel-core": "^6.26.3",
-    "babel-loader": "^7.1.5",
-    "babel-preset-env": "^1.7.0",
-    "babel-preset-react": "^6.24.1",
+    "@babel/core": "^7.0.0-beta.42",
+    "@babel/preset-env": "^7.0.0-beta.42",
+    "@babel/preset-react": "^7.0.0-beta.42",
+    "babel-loader": "^8.0.0-beta",
     "express": "^4.16.3",
     "nedb": "^1.8.0",
     "react": "^16.4.1",
@@ -21,5 +23,8 @@
     "react-router-dom": "^4.3.1",
     "superagent": "^3.8.3",
     "webpack": "^4.15.1"
+  },
+  "devDependencies": {
+    "webpack-cli": "^3.0.8"
   }
 }

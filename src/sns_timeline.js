@@ -1,20 +1,17 @@
-import React, { Component } from 'react'
+import React, {Component} from 'react'
 import request from 'superagent'
 import styles from './styles'
 
-
-// タイムライン画面コンポーネント
+// タイムライン画面を定義するコンポーネント
 export default class SNSTimeline extends Component {
-  constructor(props) {
+  constructor (props) {
     super(props)
     this.state = { timelines: [], comment: '' }
   }
-  componentWillMount() {
+  componentWillMount () {
     this.loadTimelines()
   }
-
-  // タイムライン取得
-  loadTimelines() {
+  loadTimelines () { // タイムラインを取得
     request
       .get('/api/get_friends_timeline')
       .query({
@@ -22,12 +19,11 @@ export default class SNSTimeline extends Component {
         token: window.localStorage.sns_auth_token
       })
       .end((err, res) => {
-        if(err) return
-        this.setState({ timelines: res.body.timelines })
+        if (err) return
+        this.setState({timelines: res.body.timelines})
       })
   }
-  // タイムライン投稿
-  post() {
+  post () { // 自分のタイムラインに投稿
     request
       .get('/api/add_timeline')
       .query({
@@ -36,14 +32,36 @@ export default class SNSTimeline extends Component {
         comment: this.state.comment
       })
       .end((err, res) => {
-        if(err) return
-        this.setState({ comment: '' })
+        if (err) return
+        this.setState({comment: ''})
         this.loadTimelines()
       })
   }
-
-  // TODO: タグの定義記述
-  render() {
-
+  render () {
+    // タイムラインの一行を生成
+    const timelines = this.state.timelines.map(e => {
+      return (
+        <div key={e._id} style={styles.timeline}>
+          <img src={'user.png'} style={styles.tl_img} />
+          <div style={styles.userid}>{e.userid}:</div>
+          <div style={styles.comment}>{e.comment}</div>
+          <p style={{clear: 'both'}} />
+        </div>
+      )
+    })
+    return (
+      <div>
+        <h1>タイムライン</h1>
+        <div>
+          <input value={this.state.comment} size={40}
+            onChange={e => this.setState({comment: e.target.value})} />
+          <button onClick={e => this.post()}>書き込む</button>
+        </div>
+        <div>{timelines}</div>
+        <hr />
+        <p><a href={'/users'}>→友達を追加する</a></p>
+        <p><a href={'/login'}>→別のユーザでログイン</a></p>
+      </div>
+    )
   }
 }
