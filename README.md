@@ -4,6 +4,6 @@
 # React client build
 $ npm run build
 
-# Server start
+# Server run
 $ npm start
 ```
